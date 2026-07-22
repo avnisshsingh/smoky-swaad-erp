@@ -2199,13 +2199,13 @@ function generateReport() {
 
         })
 
-        .withFailureHandler(function(error) {
+.withFailureHandler(function(error){
 
-            console.error(error);
+    console.error("SERVER ERROR:", error);
 
-            alert("Unable to generate report.");
+    alert(error.message || JSON.stringify(error));
 
-        })
+})
 
         .getReportsData(fromDate, toDate);
 

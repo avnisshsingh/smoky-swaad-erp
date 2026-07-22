@@ -37,24 +37,19 @@ function getReportsData(fromDate, toDate) {
     // ==========================================
     const menuCostMap = {};
 
-    menuData.forEach(function(row){
+    menuData.forEach(function (row) {
 
         const menuItem = String(row[1]).trim();
 
-        menuCostMap[menuItem] = {
-
-            cost: Number(row[3]) || 0
-
-        };
+        menuCostMap[menuItem] = Number(row[3]) || 0;
 
     });
 
     // ==========================================
-    // Variables
+    // Report Variables
     // ==========================================
     let totalOrders = 0;
     let totalSales = 0;
-
     let totalCost = 0;
     let grossProfit = 0;
 
@@ -71,7 +66,9 @@ function getReportsData(fromDate, toDate) {
     // ==========================================
     // Process Orders
     // ==========================================
-    data.forEach(function(row){
+    data.forEach(function (row) {
+
+        const orderId = String(row[0]).trim();
 
         const orderDate = Utilities.formatDate(
             new Date(row[1]),
@@ -81,21 +78,58 @@ function getReportsData(fromDate, toDate) {
 
         const grandTotal = Number(row[10]) || 0;
 
+        // ==========================================
+        // Calculate Food Cost For This Order
+        // ==========================================
+        let orderCost = 0;
+
+        orderItems.forEach(function (itemRow) {
+
+            if (String(itemRow[0]).trim() !== orderId) {
+
+                return;
+
+            }
+
+            const menuItem = String(itemRow[1]).trim();
+
+            const qty = Number(itemRow[2]) || 0;
+
+            const costPrice = menuCostMap[menuItem] || 0;
+
+            orderCost += qty * costPrice;
+
+        });
+
+        const orderProfit = grandTotal - orderCost;
+
+        // ==========================================
         // Today's KPI
-        if(orderDate === today){
+        // ==========================================
+        if (orderDate === today) {
 
             todayOrders++;
 
             todaySales += grandTotal;
 
+            todayProfit += orderProfit;
+
         }
 
-        // Selected Date Range
-        if(orderDate >= fromDate && orderDate <= toDate){
+        // ==========================================
+        // Date Range Report
+        // ==========================================
+        if (fromDate && toDate &&
+            orderDate >= fromDate &&
+            orderDate <= toDate) {
 
             totalOrders++;
 
             totalSales += grandTotal;
+
+            totalCost += orderCost;
+
+            grossProfit += orderProfit;
 
             orders.push({
 
@@ -123,8 +157,6 @@ function getReportsData(fromDate, toDate) {
 
     });
 
-    grossProfit = totalSales - totalCost;
-
     return {
 
         success: true,
@@ -142,6 +174,11 @@ function getReportsData(fromDate, toDate) {
         totalCost: totalCost,
 
         grossProfit: grossProfit,
+
+        profitPercentage:
+            totalSales > 0
+                ? ((grossProfit / totalSales) * 100).toFixed(2)
+                : "0.00",
 
         orders: orders
 
