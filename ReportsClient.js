@@ -49,12 +49,22 @@ function initializeReports() {
     });
 
     // Load Today's KPI
-    google.script.run
+google.script.run
+    .withSuccessHandler(function(data){
 
-        .withSuccessHandler(renderReportDashboard)
+        console.log("Server Response:", data);
 
-        .getReportsData(today, today);
+        renderReportDashboard(data);
 
+    })
+
+    .withFailureHandler(function(error){
+
+        console.error(error);
+
+    })
+
+    .getReportsData(today, today);
 }
 
 
