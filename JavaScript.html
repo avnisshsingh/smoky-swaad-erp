@@ -103,8 +103,13 @@ function openScreen(screen) {
                     initializeInvoice();
                 }, 100);
 
-            }
+            }else if (screen === "Reports") {
 
+                setTimeout(function () {
+                    initializeReports();
+                }, 100);
+
+}
         })
         .loadScreen(screen);
 
@@ -2067,9 +2072,30 @@ Thank you for choosing Smoky Swaad.
 
 
 
+function initializeReports(){
 
+    console.log("Reports Module Loaded");
 
+    google.script.run
 
+        .withSuccessHandler(renderReportDashboard)
+
+        .getReportsData();
+
+}
+
+function renderReportDashboard(data){
+
+    document.getElementById("todaySales").innerText =
+        "₹" + Number(data.todaySales).toFixed(2);
+
+    document.getElementById("todayOrders").innerText =
+        data.todayOrders;
+
+    document.getElementById("todayProfit").innerText =
+        "₹" + Number(data.todayProfit).toFixed(2);
+
+}
 
 
 
