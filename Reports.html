@@ -61,3 +61,165 @@
     </div>
 
 </div>
+
+
+
+
+
+
+
+
+
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-primary text-white">
+
+        📅 Report Filters
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-4">
+
+                <label class="form-label fw-bold">
+                    From Date
+                </label>
+
+                <input
+                    type="date"
+                    id="reportFromDate"
+                    class="form-control">
+
+            </div>
+
+            <div class="col-md-4">
+
+                <label class="form-label fw-bold">
+                    To Date
+                </label>
+
+                <input
+                    type="date"
+                    id="reportToDate"
+                    class="form-control">
+
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+
+                <button
+                    class="btn btn-success w-100"
+                    onclick="generateReport()">
+
+                    📊 Generate Report
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="row mt-4">
+
+    <div class="col-md-6">
+
+        <div class="card border-primary shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h6>Total Orders</h6>
+
+               <h3 id="reportTotalOrders">0</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <div class="card border-success shadow-sm">
+
+            <div class="card-body text-center">
+
+                <h6>Total Sales</h6>
+
+               <h3 id="reportTotalSales">₹0.00</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-primary text-white">
+
+        📋 Order Details
+
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-bordered table-hover align-middle">
+
+            <thead class="table-light">
+
+                <tr>
+
+                    <th>Order ID</th>
+
+                    <th>Date</th>
+
+                    <th>Customer</th>
+
+                    <th>Mobile</th>
+
+                    <th>Payment</th>
+
+                    <th>Status</th>
+
+                    <th class="text-end">Amount</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="reportOrdersBody">
+
+                <tr>
+
+                    <td colspan="7" class="text-center text-muted">
+
+                        No records found.
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+

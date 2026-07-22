@@ -2071,16 +2071,68 @@ Thank you for choosing Smoky Swaad.
 
 
 
-
-function initializeReports(){
+function initializeReports() {
 
     console.log("Reports Module Loaded");
 
-    google.script.run
+    const today = new Date().toISOString().split("T")[0];
 
-        .withSuccessHandler(renderReportDashboard)
+    const fromDate = document.getElementById("reportFromDate");
 
-        .getReportsData();
+    const toDate = document.getElementById("reportToDate");
+
+    // Set default values
+    fromDate.value = today;
+
+    toDate.value = today;
+
+    // Restrict future dates
+    fromDate.max = today;
+
+    toDate.max = today;
+
+    // Prevent To Date from being earlier than From Date
+    toDate.min = fromDate.value;
+
+    // From Date Change
+    fromDate.addEventListener("change", function () {
+
+        toDate.min = this.value;
+
+        if (toDate.value < this.value) {
+
+            toDate.value = this.value;
+
+        }
+
+    });
+
+    // To Date Change
+    toDate.addEventListener("change", function () {
+
+        fromDate.max = this.value > today
+            ? today
+            : this.value;
+
+        if (fromDate.value > this.value) {
+
+            fromDate.value = this.value;
+
+        }
+
+    });
+
+google.script.run
+
+    .withSuccessHandler(renderReportDashboard)
+
+    .withFailureHandler(function(error){
+
+        console.error(error);
+
+    })
+
+    .getReportsData(today, today);
 
 }
 
@@ -2102,14 +2154,125 @@ function renderReportDashboard(data){
 
 
 
+/**
+ * ==========================================
+ * Generate Report
+ * ==========================================
+ */
+function generateReport() {
+
+    const fromDate =
+        document.getElementById("reportFromDate").value;
+
+    const toDate =
+        document.getElementById("reportToDate").value;
+
+    if (!fromDate || !toDate) {
+
+        alert("Please select both dates.");
+
+        return;
+
+    }
+
+    if (fromDate > toDate) {
+
+        alert("From Date cannot be greater than To Date.");
+
+        return;
+
+    }
+
+    google.script.run
+
+        .withSuccessHandler(function(data) {
+
+            if (!data.success) {
+
+                alert(data.message);
+
+                return;
+
+            }
+
+            renderSummary(data);
+
+        })
+
+        .withFailureHandler(function(error) {
+
+            console.error(error);
+
+            alert("Unable to generate report.");
+
+        })
+
+        .getReportsData(fromDate, toDate);
+
+}
+
+
+
+
+function renderSummary(data) {
+
+    document.getElementById("reportTotalOrders").innerText =
+        data.totalOrders;
+
+    document.getElementById("reportTotalSales").innerText =
+        "₹" + Number(data.totalSales).toFixed(2);
+
+    renderOrderTable(data.orders);
+
+}
 
 
 
 
 
+function renderOrderTable(orders) {
 
+    const tbody = document.getElementById("reportOrdersBody");
 
+    tbody.innerHTML = "";
 
+    if (!orders || orders.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted">
+                    No records found.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+let html = "";
+
+orders.forEach(function(order){
+
+    html += `
+        <tr>
+            <td>${order.orderId}</td>
+            <td>${order.orderDate}</td>
+            <td>${order.customer}</td>
+            <td>${order.mobile}</td>
+            <td>${order.paymentMode}</td>
+            <td>${order.paymentStatus}</td>
+            <td class="text-end">
+                ₹${Number(order.grandTotal).toFixed(2)}
+            </td>
+        </tr>
+    `;
+
+});
+
+tbody.innerHTML = html;
+
+}
 
 
 
