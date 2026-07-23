@@ -17,6 +17,7 @@ const SHEETS = {
   PURCHASE_REGISTER: "Purchase Register",
   RECIPE: "Recipe Master",
   DASHBOARD: "Dashboard",
+  BUSINESS_COSTS: "BusinessCosts",
   CONFIG: "Config"
 
 };

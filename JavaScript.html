@@ -96,7 +96,12 @@
             } else if (screen === "Reports") {
                setTimeout(function () {
                   initializeReports();
-               }, 100);
+               }, 100); 
+            }
+              else if (screen === "BusinessCosts") {
+                    setTimeout(function () {
+                  initializeBusinessCosts();
+                  }, 100); 
             }
          })
          .loadScreen(screen);
