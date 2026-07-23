@@ -1,6 +1,5 @@
 <script>
-
-/**
+  /**
  * ==========================================
  * Initialize Business Costs
  * ==========================================
@@ -113,12 +112,13 @@ function renderBusinessCosts(data) {
 
                 <td class="text-center">
 
-                    <button
-                        class="btn btn-sm btn-primary">
+<button
+    class="btn btn-sm btn-primary"
+    onclick="editBusinessCost(${cost.rowNumber})">
 
-                        Edit
+    ✏️ Edit
 
-                    </button>
+</button>
 
                 </td>
 
@@ -139,11 +139,12 @@ function renderBusinessCosts(data) {
  * Save Business Cost
  * ==========================================
  */
-
-
 function saveBusinessCost() {
 
     const cost = {
+
+        rowNumber:
+            document.getElementById("businessCostRow").value,
 
         costHead:
             document.getElementById("costHead").value.trim(),
@@ -213,6 +214,59 @@ function saveBusinessCost() {
         .saveBusinessCost(cost);
 
 }
+
+
+/**
+ * ==========================================
+ * Edit Business Cost
+ * ==========================================
+ */
+function editBusinessCost(rowNumber) {
+
+    google.script.run
+
+        .withSuccessHandler(function(cost) {
+
+            document.getElementById("businessCostModalTitle").innerText =
+                "Edit Business Cost";
+
+            document.getElementById("businessCostRow").value =
+                cost.rowNumber;
+
+            document.getElementById("costHead").value =
+                cost.costHead;
+
+            document.getElementById("costAmount").value =
+                cost.amount;
+
+            document.getElementById("costUnit").value =
+                cost.unit;
+
+            document.getElementById("costActive").value =
+                cost.active;
+
+            document.getElementById("costRemarks").value =
+                cost.remarks;
+
+            new bootstrap.Modal(
+                document.getElementById("businessCostModal")
+            ).show();
+
+        })
+
+        .withFailureHandler(function(error) {
+
+            console.error(error);
+
+            alert(error);
+
+        })
+
+        .getBusinessCost(rowNumber);
+
+}
+
+
 
 
 

@@ -1,0 +1,151 @@
+<script>
+
+/**
+ * ==========================================
+ * Add Ingredient Row
+ * ==========================================
+ */
+function addIngredientRow() {
+
+    const tbody =
+        document.getElementById("ingredientTableBody");
+
+    // Remove placeholder
+    if (tbody.children.length === 1 &&
+        tbody.children[0].cells.length === 1) {
+
+        tbody.innerHTML = "";
+
+    }
+
+    const rowCount = tbody.rows.length + 1;
+
+    const row = tbody.insertRow();
+
+    row.innerHTML = `
+
+        <td class="text-center">
+
+            ${rowCount}
+
+        </td>
+
+        <td>
+
+            <select class="form-select ingredientName">
+
+                <option value="">
+
+                    Select Ingredient
+
+                </option>
+
+            </select>
+
+        </td>
+
+        <td>
+
+            <input
+                type="number"
+                class="form-control text-end ingredientQty"
+                value="0"
+                min="0"
+                step="0.001">
+
+        </td>
+
+        <td>
+
+            <select class="form-select ingredientUnit">
+
+                <option value="Kg">Kg</option>
+                <option value="Gram">Gram</option>
+                <option value="Litre">Litre</option>
+                <option value="ml">ml</option>
+                <option value="Unit">Unit</option>
+
+            </select>
+
+        </td>
+
+        <td class="text-end">
+
+            ₹0.00
+
+        </td>
+
+        <td class="text-end">
+
+            ₹0.00
+
+        </td>
+
+        <td class="text-center">
+
+            <button
+                class="btn btn-sm btn-danger"
+                onclick="removeIngredientRow(this)">
+
+                ✖
+
+            </button>
+
+        </td>
+
+    `;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ==========================================
+ * Remove Ingredient Row
+ * ==========================================
+ */
+function removeIngredientRow(button) {
+
+    const tbody =
+        document.getElementById("ingredientTableBody");
+
+    button.closest("tr").remove();
+
+    // Re-number rows
+
+    Array.from(tbody.rows).forEach(function(row, index){
+
+        row.cells[0].innerText = index + 1;
+
+    });
+
+    if (tbody.rows.length === 0) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td colspan="7"
+                    class="text-center text-muted">
+
+                    Click "Add Ingredient" to start.
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+}
+
+</script>

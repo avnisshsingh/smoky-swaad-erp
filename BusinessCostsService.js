@@ -65,21 +65,22 @@ function getBusinessCosts() {
 
 /**
  * ==========================================
- * Save Business Cost
+ * Save / Update Business Cost
  * ==========================================
  */
-
 function saveBusinessCost(cost) {
 
     const sheet = getSheet(SHEETS.BUSINESS_COSTS);
 
     const data = sheet.getDataRange().getValues();
 
-    // Duplicate Check
+    const rowNumber = Number(cost.rowNumber);
 
+    // Duplicate Check
     for (let i = 1; i < data.length; i++) {
 
         if (
+            i + 1 !== rowNumber &&
             String(data[i][0]).trim().toUpperCase() ===
             cost.costHead.trim().toUpperCase()
         ) {
@@ -96,19 +97,37 @@ function saveBusinessCost(cost) {
 
     }
 
-    sheet.appendRow([
+    // ==========================================
+    // UPDATE
+    // ==========================================
 
-        cost.costHead,
+    if (rowNumber > 0) {
 
-        cost.amount,
+        sheet.getRange(rowNumber, 1, 1, 5).setValues([[
+            cost.costHead,
+            cost.amount,
+            cost.unit,
+            cost.active,
+            cost.remarks
+        ]]);
 
-        cost.unit,
+    }
 
-        cost.active,
+    // ==========================================
+    // INSERT
+    // ==========================================
 
-        cost.remarks
+    else {
 
-    ]);
+        sheet.appendRow([
+            cost.costHead,
+            cost.amount,
+            cost.unit,
+            cost.active,
+            cost.remarks
+        ]);
+
+    }
 
     return {
 
@@ -119,3 +138,33 @@ function saveBusinessCost(cost) {
 }
 
 
+/**
+ * ==========================================
+ * Get Business Cost By Row
+ * ==========================================
+ */
+function getBusinessCost(rowNumber) {
+
+    const sheet = getSheet(SHEETS.BUSINESS_COSTS);
+
+    const row = sheet
+        .getRange(rowNumber, 1, 1, 5)
+        .getValues()[0];
+
+    return {
+
+        rowNumber: rowNumber,
+
+        costHead: row[0],
+
+        amount: Number(row[1]) || 0,
+
+        unit: row[2],
+
+        active: row[3],
+
+        remarks: row[4]
+
+    };
+
+}

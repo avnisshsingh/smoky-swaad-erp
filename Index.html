@@ -3,41 +3,43 @@
 
 <head>
 
-    <base target="_top">
+  <base target="_top">
 
-    <title>Smoky Swaad ERP</title>
+  <title>Smoky Swaad </title>
 
-    <?!= include('CSS'); ?>
+  <?!= include('CSS'); ?>
 
 </head>
 
 <body>
 
-    <!-- Header -->
-    <?!= include('Header'); ?>
+  <!-- Header -->
+  <?!= include('Header'); ?>
 
-<div id="sidebar">
+  <div id="sidebar">
 
     <?!= include('Sidebar'); ?>
 
-</div>
+  </div>
 
-<div id="main-content">
+  <div id="main-content">
 
-<div id="content">
+    <div id="content">
 
-    <?!= include('POS'); ?>
+      <?!= include('POS'); ?>
 
-</div>
+    </div>
 
-</div>
+  </div>
 
-    <?!= include('JavaScript'); ?>
-    
-    <?!= include('BusinessCostsClient'); ?>
+  <?!= include('JavaScript'); ?>
+
+  <?!= include('BusinessCostsClient'); ?>
+
+  <?!= include('PricingCalculatorClient'); ?>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 
 </html>
