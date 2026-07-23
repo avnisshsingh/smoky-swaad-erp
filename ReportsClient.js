@@ -5,62 +5,62 @@
  */
 function initializeReports() {
 
-    console.log("Reports Module Loaded");
+  console.log("Reports Module Loaded");
 
-    const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
 
-    const fromDate = document.getElementById("reportFromDate");
+  const fromDate = document.getElementById("reportFromDate");
 
-    const toDate = document.getElementById("reportToDate");
+  const toDate = document.getElementById("reportToDate");
 
-    // Default Dates
-    fromDate.value = today;
-    toDate.value = today;
+  // Default Dates
+  fromDate.value = today;
+  toDate.value = today;
 
-    // Restrict Future Dates
-    fromDate.max = today;
-    toDate.max = today;
+  // Restrict Future Dates
+  fromDate.max = today;
+  toDate.max = today;
 
-    // To Date cannot be less than From Date
-    toDate.min = today;
+  // To Date cannot be less than From Date
+  toDate.min = today;
 
-    // From Date Changed
-    fromDate.addEventListener("change", function () {
+  // From Date Changed
+  fromDate.addEventListener("change", function () {
 
-        toDate.min = this.value;
+    toDate.min = this.value;
 
-        if (toDate.value < this.value) {
+    if (toDate.value < this.value) {
 
-            toDate.value = this.value;
+      toDate.value = this.value;
 
-        }
+    }
 
-    });
+  });
 
-    // To Date Changed
-    toDate.addEventListener("change", function () {
+  // To Date Changed
+  toDate.addEventListener("change", function () {
 
-        if (this.value > today) {
+    if (this.value > today) {
 
-            this.value = today;
+      this.value = today;
 
-        }
+    }
 
-    });
+  });
 
-    // Load Today's KPI
-google.script.run
-    .withSuccessHandler(function(data){
+  // Load Today's KPI
+  google.script.run
+    .withSuccessHandler(function (data) {
 
-        console.log("Server Response:", data);
+      console.log("Server Response:", data);
 
-        renderReportDashboard(data);
+      renderReportDashboard(data);
 
     })
 
-    .withFailureHandler(function(error){
+    .withFailureHandler(function (error) {
 
-        console.error(error);
+      console.error(error);
 
     })
 
@@ -75,62 +75,66 @@ google.script.run
  */
 function generateReport() {
 
-    const fromDate =
-        document.getElementById("reportFromDate").value;
+  const fromDate =
+    document.getElementById("reportFromDate").value;
 
-    const toDate =
-        document.getElementById("reportToDate").value;
+  const toDate =
+    document.getElementById("reportToDate").value;
 
-    if (!fromDate || !toDate) {
+  if (!fromDate || !toDate) {
 
-        alert("Please select both dates.");
+    alert("Please select both dates.");
 
-        return;
+    return;
 
-    }
+  }
 
-    if (fromDate > toDate) {
+  if (fromDate > toDate) {
 
-        alert("From Date cannot be greater than To Date.");
+    alert("From Date cannot be greater than To Date.");
 
-        return;
+    return;
 
-    }
+  }
 
-    google.script.run
+  google.script.run
 
-.withSuccessHandler(function(response){
+    .withSuccessHandler(function (response) {
 
-    console.log("Reports Response:", response);
+      console.log("Reports Response:", response);
 
-    console.log("Orders:", response.orders);
+      console.log("Orders:", response.orders);
 
-    console.log("Orders Count:",
+      console.log("Orders Count:",
         response.orders ? response.orders.length : 0);
 
-    if (!response.success) {
+      if (!response.success) {
 
         alert(response.message);
 
         return;
 
-    }
+      }
 
-    renderSummary(response);
+      renderSummary(response);
 
-    renderOrderTable(response.orders);
+      renderProfitSummary(response);
 
-})
+      renderTopSellingItems(response.topSellingItems);
 
-        .withFailureHandler(function(error){
+      renderOrderTable(response.orders);
 
-            console.error(error);
+    })
 
-            alert(error);
+    .withFailureHandler(function (error) {
 
-        })
+      console.error(error);
 
-        .getReportsData(fromDate, toDate);
+      alert(error);
+
+    })
+
+    .getReportsData(fromDate, toDate);
 
 }
 
@@ -142,11 +146,11 @@ function generateReport() {
  */
 function renderSummary(data) {
 
-    console.log("===== NEW renderSummary =====");
+  console.log("===== NEW renderSummary =====");
 
-    console.log(data);
+  console.log(data);
 
-    debugger;
+  debugger;
 
 }
 
@@ -155,13 +159,13 @@ function renderSummary(data) {
 
 function renderOrderTable(orders) {
 
-    const tbody = document.getElementById("reportOrdersBody");
+  const tbody = document.getElementById("reportOrdersBody");
 
-    tbody.innerHTML = "";
+  tbody.innerHTML = "";
 
-    if (!orders || orders.length === 0) {
+  if (!orders || orders.length === 0) {
 
-        tbody.innerHTML = `
+    tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center text-muted">
                     No records found.
@@ -169,13 +173,13 @@ function renderOrderTable(orders) {
             </tr>
         `;
 
-        return;
+    return;
 
-    }
+  }
 
-    orders.forEach(function(order){
+  orders.forEach(function (order) {
 
-        tbody.innerHTML += `
+    tbody.innerHTML += `
 
             <tr>
 
@@ -197,6 +201,6 @@ function renderOrderTable(orders) {
 
         `;
 
-    });
+  });
 
 }

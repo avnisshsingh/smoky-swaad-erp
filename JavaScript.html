@@ -12,27 +12,24 @@
    let deliveryCharge = 0;
    let purchaseSettings = {};
    let selectedPurchaseItem = null;
-   
-   
+
    const QUICK_NOTES = [
+      "Less Spicy",
 
-    "Less Spicy",
+      "Extra Spicy",
 
-    "Extra Spicy",
+      "No Onion",
 
-    "No Onion",
+      "No Garlic",
 
-    "No Garlic",
+      "Extra Gravy",
 
-    "Extra Gravy",
+      "Less Oil",
 
-    "Less Oil",
+      "Call Customer",
 
-    "Call Customer",
-
-    "Ring Bell"
-
-];
+      "Ring Bell",
+   ];
 
    /* ==========================================
    Application Startup
@@ -66,60 +63,50 @@
       });
    }
 
+   /**
+    * ==========================================
+    * openScreen
+    * ==========================================
+    */
 
-
-
-
-
-function openScreen(screen) {
-
-    google.script.run
-        .withSuccessHandler(function (html) {
-
+   function openScreen(screen) {
+      google.script.run
+         .withSuccessHandler(function (html) {
             document.getElementById("content").innerHTML = html;
             document.title = "Smoky Swaad ERP - " + screen;
 
             if (screen === "POS") {
+               loadMenuCache();
+               loadSettingsCache();
 
-                loadMenuCache();
-                loadSettingsCache();
-
-                const orderDate = document.getElementById("orderDate");
-                if (orderDate) {
-                    orderDate.value = new Date().toISOString().split("T")[0];
-                }
-
+               const orderDate = document.getElementById("orderDate");
+               if (orderDate) {
+                  orderDate.value = new Date().toISOString().split("T")[0];
+               }
             } else if (screen === "Purchase") {
-
-                setTimeout(function () {
-                    if (document.getElementById("purchaseDate")) {
-                        initializePurchase();
-                    }
-                }, 100);
-
+               setTimeout(function () {
+                  if (document.getElementById("purchaseDate")) {
+                     initializePurchase();
+                  }
+               }, 100);
             } else if (screen === "Invoice") {
+               setTimeout(function () {
+                  initializeInvoice();
+               }, 100);
+            } else if (screen === "Reports") {
+               setTimeout(function () {
+                  initializeReports();
+               }, 100);
+            }
+         })
+         .loadScreen(screen);
+   }
 
-                setTimeout(function () {
-                    initializeInvoice();
-                }, 100);
-
-            }else if (screen === "Reports") {
-
-                setTimeout(function () {
-                    initializeReports();
-                }, 100);
-
-}
-        })
-        .loadScreen(screen);
-
-}
-
-
-
-
-
-
+   /**
+    * ==========================================
+    * setActiveMenu
+    * ==========================================
+    */
 
    function setActiveMenu(selectedLink) {
       document.querySelectorAll(".menu-link").forEach((link) => {
@@ -133,51 +120,45 @@ function openScreen(screen) {
    Customer
 ========================================== */
 
-function searchCustomer() {
+   function searchCustomer() {
+      const mobileBox = document.getElementById("mobile");
 
-    const mobileBox = document.getElementById("mobile");
+      if (!mobileBox) {
+         console.error("Mobile textbox not found.");
+         return;
+      }
 
-    if (!mobileBox) {
-        console.error("Mobile textbox not found.");
-        return;
-    }
+      const mobile = mobileBox.value.trim();
 
-    const mobile = mobileBox.value.trim();
+      if (mobile.length !== 10) {
+         return;
+      }
 
-    if (mobile.length !== 10) {
-        return;
-    }
-
-    google.script.run
-        .withSuccessHandler(fillCustomerForm)
-        .withFailureHandler(function(error){
+      google.script.run
+         .withSuccessHandler(fillCustomerForm)
+         .withFailureHandler(function (error) {
             console.error(error);
-        })
-        .getCustomerByMobileNumber(mobile);
+         })
+         .getCustomerByMobileNumber(mobile);
+   }
 
-}
+   /**
+    * Fill Customer Details
+    */
+   function fillCustomerForm(customer) {
+      if (!customer) {
+         return;
+      }
 
+      document.getElementById("customerName").value =
+         customer.customerName || "";
 
+      document.getElementById("houseAddress").value =
+         customer.houseAddress || customer.address || "";
 
-/**
- * Fill Customer Details
- */
-function fillCustomerForm(customer) {
-
-    if (!customer) {
-        return;
-    }
-
-    document.getElementById("customerName").value =
-        customer.customerName || "";
-
-    document.getElementById("houseAddress").value =
-        customer.houseAddress || customer.address || "";
-
-    document.getElementById("deliveryArea").value =
-        customer.deliveryArea || "";
-
-}
+      document.getElementById("deliveryArea").value =
+         customer.deliveryArea || "";
+   }
 
    /* ==========================================
    Menu Cache
@@ -195,16 +176,13 @@ function fillCustomerForm(customer) {
          .loadMenu();
    }
 
+   /**
+    * Load Application Settings
+    */
+   function loadSettingsCache() {
+      google.script.run
 
-/**
- * Load Application Settings
- */
-function loadSettingsCache() {
-
-    google.script.run
-
-        .withSuccessHandler(function (settings) {
-
+         .withSuccessHandler(function (settings) {
             appSettings = settings;
 
             console.log(appSettings);
@@ -214,34 +192,26 @@ function loadSettingsCache() {
             console.log("Settings Loaded");
             const orderDate = document.getElementById("orderDate");
 
-if (orderDate && !orderDate.value) {
-
-    orderDate.value = new Date().toISOString().split("T")[0];
-
-}
+            if (orderDate && !orderDate.value) {
+               orderDate.value = new Date().toISOString().split("T")[0];
+            }
 
             // Enable Save Button
             const saveButton = document.getElementById("btnSaveOrder");
 
             if (saveButton) {
-
-                saveButton.disabled = false;
-
+               saveButton.disabled = false;
             }
+         })
 
-        })
-
-        .withFailureHandler(function(error){
-
+         .withFailureHandler(function (error) {
             console.error(error);
 
             alert("Unable to load application settings.");
+         })
 
-        })
-
-        .loadAppSettings();
-
-}
+         .loadAppSettings();
+   }
 
    /* ==========================================
    Menu Search (Local Search)
@@ -329,24 +299,22 @@ if (orderDate && !orderDate.value) {
          existingItem.qty++;
          refreshCartCalculations();
       } else {
-cart.push({
+         cart.push({
+            itemId: selectedItem.itemId,
 
-    itemId: selectedItem.itemId,
+            itemName: selectedItem.itemName,
 
-    itemName: selectedItem.itemName,
+            price: Number(selectedItem.price),
 
-    price: Number(selectedItem.price),
+            cost: Number(selectedItem.cost),
 
-    cost: Number(selectedItem.cost),
+            qty: 1,
 
-    qty: 1,
+            lineTotal: Number(selectedItem.price),
 
-    lineTotal: Number(selectedItem.price),
-
-    profit: Number(selectedItem.price) - Number(selectedItem.cost)
-
-});
-refreshCartCalculations();
+            profit: Number(selectedItem.price) - Number(selectedItem.cost),
+         });
+         refreshCartCalculations();
       }
 
       // Clear search
@@ -393,7 +361,7 @@ refreshCartCalculations();
          return;
       }
 
-     let html = "";
+      let html = "";
 
       cart.forEach((item, index) => {
          const lineTotal = item.lineTotal;
@@ -500,341 +468,254 @@ refreshCartCalculations();
     * Increase Quantity
     */
    function increaseQty(index) {
-cart[index].qty++;
+      cart[index].qty++;
 
-refreshCartCalculations();
+      refreshCartCalculations();
 
-renderCart();
+      renderCart();
    }
 
    /**
     * Decrease Quantity
     */
    function decreaseQty(index) {
-if(!cart[index]) return;
-cart[index].qty--;
+      if (!cart[index]) return;
+      cart[index].qty--;
 
-if(cart[index].qty<=0){
+      if (cart[index].qty <= 0) {
+         cart.splice(index, 1);
+      } else {
+         refreshCartCalculations();
+      }
 
-    cart.splice(index,1);
-
-}else{
-
-    refreshCartCalculations();
-
-}
-
-renderCart();
+      renderCart();
    }
 
    /**
     * Remove Item From Cart
     */
-function removeItem(index) {
-    if(index<0 || index>=cart.length) return;
-    cart.splice(index,1);
+   function removeItem(index) {
+      if (index < 0 || index >= cart.length) return;
+      cart.splice(index, 1);
 
-    refreshCartCalculations();
+      refreshCartCalculations();
 
-    renderCart();
-
-}
+      renderCart();
+   }
 
    /**
     * Calculate Order Totals
     */
    function calculateTotals() {
+      const subTotal = cart.reduce((total, item) => {
+         return total + item.price * item.qty;
+      }, 0);
 
-    const subTotal = cart.reduce((total, item) => {
-        return total + item.price * item.qty;
-    }, 0);
+      let discount = parseFloat(document.getElementById("discount")?.value);
 
-    let discount = parseFloat(
-        document.getElementById("discount")?.value
-    );
+      if (isNaN(discount)) discount = 0;
 
-    if (isNaN(discount)) discount = 0;
+      if (discount < 0) discount = 0;
 
-    if (discount < 0) discount = 0;
+      if (discount > subTotal) {
+         discount = subTotal;
 
-    if (discount > subTotal) {
+         const discountBox = document.getElementById("discount");
 
-        discount = subTotal;
-
-        const discountBox =
-            document.getElementById("discount");
-
-        if (discountBox) {
-
+         if (discountBox) {
             discountBox.value = discount;
+         }
+      }
 
-        }
+      const grandTotal = subTotal - discount + deliveryCharge;
 
-    }
+      const subTotalEl = document.getElementById("subTotal");
 
-    const grandTotal =
-        subTotal - discount + deliveryCharge;
+      const deliveryEl = document.getElementById("deliveryCharge");
 
-    const subTotalEl =
-        document.getElementById("subTotal");
+      const grandEl = document.getElementById("grandTotal");
 
-    const deliveryEl =
-        document.getElementById("deliveryCharge");
+      if (subTotalEl) subTotalEl.innerText = "₹" + subTotal.toFixed(2);
 
-    const grandEl =
-        document.getElementById("grandTotal");
+      if (deliveryEl) deliveryEl.innerText = "₹" + deliveryCharge.toFixed(2);
 
-    if (subTotalEl)
-        subTotalEl.innerText = "₹" + subTotal.toFixed(2);
-
-    if (deliveryEl)
-        deliveryEl.innerText = "₹" + deliveryCharge.toFixed(2);
-
-    if (grandEl)
-        grandEl.innerText = "₹" + grandTotal.toFixed(2);
-
-}
-
-/**
- * Collect Complete Order Data
- */
-function collectOrderData() {
-
-    const getValue = (id) => {
-
-        const element = document.getElementById(id);
-
-        if (!element) {
-            return "";
-        }
-
-        return element.value;
-
-    };
-
-    const customer = {
-
-        customerName: getValue("customerName").trim(),
-
-        mobile: getValue("mobile").trim(),
-
-        deliveryArea: getValue("deliveryArea"),
-
-        houseAddress: getValue("houseAddress").trim(),
-
-        deliverySlot: getValue("deliverySlot")
-
-    };
-
-    const order = {
-
-        orderType: getValue("orderType"),
-
-        specialInstructions: getValue("specialInstructions").trim()
-
-    };
-
-    const payment = {
-
-        paymentMode: getValue("paymentMode"),
-
-        paymentStatus: getValue("paymentStatus") || "Pending"
-
-    };
-
-    const discount = parseFloat(getValue("discount")) || 0;
-
-    const subTotal = cart.reduce((sum, item) => {
-
-        return sum + item.lineTotal;
-
-    }, 0);
-
-    const totals = {
-
-        subTotal: subTotal,
-
-        discount: discount,
-
-        deliveryCharge: deliveryCharge,
-
-        grandTotal: subTotal - discount + deliveryCharge
-
-    };
-
-const meta = {
-
-    orderDate: getValue("orderDate"),
-
-    source: "WEB"
-
-};
-
-    return {
-
-        customer,
-
-        order,
-
-        payment,
-
-        totals,
-
-        cart: cart.map(item => ({ ...item })),
-
-        meta
-
-    };
-
-}
-
-
-/**
- * Enable / Disable Discount Field
- */
-function updateDiscountState() {
-
-    const area = document.getElementById("deliveryArea");
-    const discountInput = document.getElementById("discount");
-
-    if (!discountInput) return;
-
-    if (cart.length === 0) {
-
-        deliveryCharge = 0;
-
-        if (area) {
-           area.value = "";
-        }
-
-        discountInput.value = 0;
-        discountInput.disabled = true;
-
-    } else {
-
-        discountInput.disabled = false;
-
-    }
-
-}
+      if (grandEl) grandEl.innerText = "₹" + grandTotal.toFixed(2);
+   }
 
    /**
- * Populate POS Dropdowns
- */
-function populatePOSDropdowns() {
+    * Collect Complete Order Data
+    */
+   function collectOrderData() {
+      const getValue = (id) => {
+         const element = document.getElementById(id);
 
-    if (appSettings.deliveryAreas) {
+         if (!element) {
+            return "";
+         }
 
-        fillSelect(
+         return element.value;
+      };
+
+      const customer = {
+         customerName: getValue("customerName").trim(),
+
+         mobile: getValue("mobile").trim(),
+
+         deliveryArea: getValue("deliveryArea"),
+
+         houseAddress: getValue("houseAddress").trim(),
+
+         deliverySlot: getValue("deliverySlot"),
+      };
+
+      const order = {
+         orderType: getValue("orderType"),
+
+         specialInstructions: getValue("specialInstructions").trim(),
+      };
+
+      const payment = {
+         paymentMode: getValue("paymentMode"),
+
+         paymentStatus: getValue("paymentStatus") || "Pending",
+      };
+
+      const discount = parseFloat(getValue("discount")) || 0;
+
+      const subTotal = cart.reduce((sum, item) => {
+         return sum + item.lineTotal;
+      }, 0);
+
+      const totals = {
+         subTotal: subTotal,
+
+         discount: discount,
+
+         deliveryCharge: deliveryCharge,
+
+         grandTotal: subTotal - discount + deliveryCharge,
+      };
+
+      const meta = {
+         orderDate: getValue("orderDate"),
+
+         source: "WEB",
+      };
+
+      return {
+         customer,
+
+         order,
+
+         payment,
+
+         totals,
+
+         cart: cart.map((item) => ({ ...item })),
+
+         meta,
+      };
+   }
+
+   /**
+    * Enable / Disable Discount Field
+    */
+   function updateDiscountState() {
+      const area = document.getElementById("deliveryArea");
+      const discountInput = document.getElementById("discount");
+
+      if (!discountInput) return;
+
+      if (cart.length === 0) {
+         deliveryCharge = 0;
+
+         if (area) {
+            area.value = "";
+         }
+
+         discountInput.value = 0;
+         discountInput.disabled = true;
+      } else {
+         discountInput.disabled = false;
+      }
+   }
+
+   /**
+    * Populate POS Dropdowns
+    */
+   function populatePOSDropdowns() {
+      if (appSettings.deliveryAreas) {
+         fillSelect(
             "deliveryArea",
-            appSettings.deliveryAreas.map(x => x.area)
-        );
+            appSettings.deliveryAreas.map((x) => x.area),
+         );
+      }
 
-    }
+      if (appSettings.paymentModes) {
+         fillSelect("paymentMode", appSettings.paymentModes);
+      }
 
-    if (appSettings.paymentModes) {
+      if (appSettings.paymentStatus) {
+         fillSelect("paymentStatus", appSettings.paymentStatus);
+      }
 
-        fillSelect(
-            "paymentMode",
-            appSettings.paymentModes
-        );
+      if (appSettings.orderTypes) {
+         fillSelect("orderType", appSettings.orderTypes);
+      }
 
-    }
-
-    if (appSettings.paymentStatus) {
-
-        fillSelect(
-            "paymentStatus",
-            appSettings.paymentStatus
-        );
-
-    }
-
-    if (appSettings.orderTypes) {
-
-        fillSelect(
-            "orderType",
-            appSettings.orderTypes
-        );
-
-    }
-
-    if (appSettings.deliverySlots) {
-
-        fillSelect(
-            "deliverySlot",
-            appSettings.deliverySlots
-        );
-
-    }
-
-}
+      if (appSettings.deliverySlots) {
+         fillSelect("deliverySlot", appSettings.deliverySlots);
+      }
+   }
 
    /**
     * Update Delivery Charge
     */
-function updateDeliveryCharge() {
+   function updateDeliveryCharge() {
+      const area = document.getElementById("deliveryArea").value;
 
-    const area = document.getElementById("deliveryArea").value;
+      if (!area) {
+         deliveryCharge = 0;
 
-    if (!area) {
+         calculateTotals();
 
-        deliveryCharge = 0;
+         return;
+      }
 
-        calculateTotals();
+      const found = appSettings.deliveryAreas.find((x) => x.area === area);
 
-        return;
+      deliveryCharge = found ? Number(found.charge) : 0;
 
-    }
+      calculateTotals();
+   }
 
-    const found = appSettings.deliveryAreas.find(
-        x => x.area === area
-    );
+   /**
+    * Fill Select Box
+    */
+   function fillSelect(id, values) {
+      const select = document.getElementById(id);
 
-    deliveryCharge = found
-        ? Number(found.charge)
-        : 0;
+      if (!select) return;
 
-    calculateTotals();
+      if (!Array.isArray(values)) {
+         console.warn(id + " has no values.");
 
-}
+         return;
+      }
 
+      let html = "";
 
-/**
- * Fill Select Box
- */
-function fillSelect(id, values) {
+      // Delivery Area should be optional
+      if (id === "deliveryArea") {
+         html += `<option value="" selected>Select Delivery Area</option>`;
+      }
 
-    const select = document.getElementById(id);
+      values.forEach((value) => {
+         html += `<option value="${value}">${value}</option>`;
+      });
 
-    if (!select) return;
-
-    if (!Array.isArray(values)) {
-
-        console.warn(id + " has no values.");
-
-        return;
-
-    }
-
-    let html = "";
-
-    // Delivery Area should be optional
-    if (id === "deliveryArea") {
-
-        html += `<option value="" selected>Select Delivery Area</option>`;
-
-    }
-
-    values.forEach(value => {
-
-        html += `<option value="${value}">${value}</option>`;
-
-    });
-
-    select.innerHTML = html;
-
-}
+      select.innerHTML = html;
+   }
 
    /**
     * Add Quick Note
@@ -888,274 +769,205 @@ function fillSelect(id, values) {
       container.innerHTML = html;
    }
 
-function clearSpecialInstructions(){
+   function clearSpecialInstructions() {
+      document.getElementById("specialInstructions").value = "";
+   }
 
-    document.getElementById(
-        "specialInstructions"
-    ).value = "";
+   /**
+    * Update Cart Calculations
+    */
+   function refreshCartCalculations() {
+      cart.forEach((item) => {
+         item.lineTotal = item.qty * item.price;
 
-}
+         item.profit = (item.price - item.cost) * item.qty;
+      });
+   }
 
+   /**
+    * ==========================================
+    * Save Order
+    * ==========================================
+    */
+   function saveOrder() {
+      const orderData = collectOrderData();
+      console.log("Order Date:", orderData.meta.orderDate);
 
+      console.log(orderData);
 
-
-
-
-/**
- * Update Cart Calculations
- */
-function refreshCartCalculations(){
-
-    cart.forEach(item=>{
-
-        item.lineTotal =
-            item.qty * item.price;
-
-        item.profit =
-            (item.price - item.cost) * item.qty;
-
-    });
-
-}
-
-
-
-/**
- * ==========================================
- * Save Order
- * ==========================================
- */
-function saveOrder() {
-
-    const orderData = collectOrderData();
-    console.log("Order Date:", orderData.meta.orderDate);
-
-    console.log(orderData);
-
-    google.script.run
-        .withSuccessHandler(function(response){
-
-            if(response.success){
-
-                alert("Order Saved Successfully\n\nOrder ID : " + response.orderId);
-                clearPOSForm();
-            }else{
-
-                alert(response.message);
-
+      google.script.run
+         .withSuccessHandler(function (response) {
+            if (response.success) {
+               alert(
+                  "Order Saved Successfully\n\nOrder ID : " + response.orderId,
+               );
+               clearPOSForm();
+            } else {
+               alert(response.message);
             }
-
-        })
-        .withFailureHandler(function(error){
-
+         })
+         .withFailureHandler(function (error) {
             alert(error.message);
-
-        })
-        .saveOrderFromWeb(orderData);
-
-}
-
+         })
+         .saveOrderFromWeb(orderData);
+   }
 
    /* ==========================================
    Utility
 ========================================== */
 
    function clearMenuSuggestions() {
-      const el=document.getElementById("menuSuggestions");
-      if(el) el.innerHTML="";
+      const el = document.getElementById("menuSuggestions");
+      if (el) el.innerHTML = "";
    }
 </script>
 
 <script>
+   /**
+    * ==========================================
+    * PURCHASE MODULE
+    * ==========================================
+    */
 
-/**
- * ==========================================
- * PURCHASE MODULE
- * ==========================================
- */
+   /**
+    * ==========================================
+    * Initialize Purchase Screen
+    * ==========================================
+    */
+   document.addEventListener("DOMContentLoaded", function () {
+      if (document.getElementById("purchaseDate")) initializePurchase();
+   });
 
+   /**
+    * ==========================================
+    * initializePurchase
+    * ==========================================
+    */
+   function initializePurchase() {
+      const purchaseDate = document.getElementById("purchaseDate");
 
-/**
- * ==========================================
- * Initialize Purchase Screen
- * ==========================================
- */
-document.addEventListener("DOMContentLoaded", function () {
-    if(document.getElementById("purchaseDate")) initializePurchase();
-});
+      if (purchaseDate) {
+         purchaseDate.value = new Date().toISOString().split("T")[0];
+      }
 
-function initializePurchase() {
+      loadPurchaseSettings();
 
-    const purchaseDate =
-        document.getElementById("purchaseDate");
+      registerPurchaseEvents();
 
-    if (purchaseDate) {
+      updatePurchaseSummary();
+   }
 
-        purchaseDate.value =
-            new Date().toISOString().split("T")[0];
+   /**
+    * ==========================================
+    * registerPurchaseEvents
+    * ==========================================
+    */
+   function registerPurchaseEvents() {
+      [
+         "purchaseDate",
+         "itemSearch",
+         "quantity",
+         "unit",
+         "paymentType",
+         "amount",
+         "supplier",
+         "remarks",
+      ].forEach(function (id) {
+         const element = document.getElementById(id);
 
-    }
-
-    loadPurchaseSettings();
-
-    registerPurchaseEvents();
-
-    updatePurchaseSummary();
-
-}
-
-function registerPurchaseEvents() {
-
-    [
-        "purchaseDate",
-        "itemSearch",
-        "quantity",
-        "unit",
-        "paymentType",
-        "amount",
-        "supplier",
-        "remarks"
-    ].forEach(function(id){
-
-        const element = document.getElementById(id);
-
-        if (element) {
-
+         if (element) {
             element.addEventListener("input", updatePurchaseSummary);
             element.addEventListener("change", updatePurchaseSummary);
+         }
+      });
+   }
 
-        }
+   /**
+    * ==========================================
+    * Load Purchase Settings
+    * ==========================================
+    */
+   function loadPurchaseSettings() {
+      google.script.run
 
-    });
-
-}
-
-
-
-
-
-/**
- * ==========================================
- * Load Purchase Settings
- * ==========================================
- */
-function loadPurchaseSettings() {
-
-    google.script.run
-
-        .withSuccessHandler(function(settings){
-
+         .withSuccessHandler(function (settings) {
             purchaseSettings = settings;
 
             populatePurchaseDropdowns();
+         })
 
-        })
-
-        .withFailureHandler(function(error){
-
+         .withFailureHandler(function (error) {
             alert(error.message);
+         })
 
-        })
+         .loadPurchaseSettings();
+   }
 
-        .loadPurchaseSettings();
+   /**
+    * ==========================================
+    * Populate Purchase Dropdowns
+    * ==========================================
+    */
+   function populatePurchaseDropdowns() {
+      fillPurchaseSelect("unit", purchaseSettings.units);
 
-}
+      fillPurchaseSelect("paymentType", purchaseSettings.paymentTypes);
 
+      fillPurchaseSelect("supplier", purchaseSettings.suppliers);
+   }
 
-/**
- * ==========================================
- * Populate Purchase Dropdowns
- * ==========================================
- */
-function populatePurchaseDropdowns() {
+   /**
+    * ==========================================
+    * Fill Dropdown
+    * ==========================================
+    */
+   function fillPurchaseSelect(id, values) {
+      const select = document.getElementById(id);
+      if (!select) return;
 
-    fillPurchaseSelect("unit", purchaseSettings.units);
+      select.innerHTML = '<option value="">Select</option>';
 
-    fillPurchaseSelect("paymentType", purchaseSettings.paymentTypes);
+      values.forEach(function (value) {
+         select.innerHTML += `<option value="${value}">${value}</option>`;
+      });
+   }
 
-    fillPurchaseSelect("supplier", purchaseSettings.suppliers);
+   /**
+    * ==========================================
+    * Search Purchase Items
+    * ==========================================
+    */
+   function searchPurchaseItems() {
+      const keyword = document.getElementById("itemSearch").value.trim();
 
-}
+      if (keyword.length === 0) {
+         clearPurchaseSuggestions();
 
+         return;
+      }
 
-/**
- * ==========================================
- * Fill Dropdown
- * ==========================================
- */
-function fillPurchaseSelect(id, values) {
+      google.script.run
 
-    const select = document.getElementById(id);
-    if(!select) return;
+         .withSuccessHandler(showPurchaseSuggestions)
 
-    select.innerHTML = '<option value="">Select</option>';
+         .searchPurchaseItems(keyword);
+   }
 
-    values.forEach(function(value){
+   /**
+    * ==========================================
+    * Show Purchase Suggestions
+    * ==========================================
+    */
+   function showPurchaseSuggestions(items) {
+      const keyword = document.getElementById("itemSearch").value.trim();
 
-        select.innerHTML += `<option value="${value}">${value}</option>`;
+      const suggestionBox = document.getElementById("itemSuggestions");
+      if (!suggestionBox) return;
+      suggestionBox.innerHTML = "";
 
-    });
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * ==========================================
- * Search Purchase Items
- * ==========================================
- */
-function searchPurchaseItems() {
-
-    const keyword =
-        document.getElementById("itemSearch").value.trim();
-
-    if (keyword.length === 0) {
-
-        clearPurchaseSuggestions();
-
-        return;
-
-    }
-
-    google.script.run
-
-        .withSuccessHandler(showPurchaseSuggestions)
-
-        .searchPurchaseItems(keyword);
-
-}
-
-
-/**
- * ==========================================
- * Show Purchase Suggestions
- * ==========================================
- */
-function showPurchaseSuggestions(items) {
-
-    const keyword = document
-        .getElementById("itemSearch")
-        .value
-        .trim();
-
-    const suggestionBox=document.getElementById("itemSuggestions");
-    if(!suggestionBox) return;
-    suggestionBox.innerHTML="";
-
-    // Existing Items
-    items.forEach(function(item){
-
-        suggestionBox.innerHTML += `
+      // Existing Items
+      items.forEach(function (item) {
+         suggestionBox.innerHTML += `
 
             <button
                 type="button"
@@ -1167,18 +979,16 @@ function showPurchaseSuggestions(items) {
             </button>
 
         `;
+      });
 
-    });
+      // Check if exact item already exists
+      const exactMatch = items.some(
+         (item) => item.itemName.toLowerCase() === keyword.toLowerCase(),
+      );
 
-    // Check if exact item already exists
-    const exactMatch = items.some(item =>
-        item.itemName.toLowerCase() === keyword.toLowerCase()
-    );
-
-    // Show Add Option only if no exact match
-    if (keyword !== "" && !exactMatch) {
-
-        suggestionBox.innerHTML += `
+      // Show Add Option only if no exact match
+      if (keyword !== "" && !exactMatch) {
+         suggestionBox.innerHTML += `
 
             <button
                 type="button"
@@ -1190,47 +1000,36 @@ function showPurchaseSuggestions(items) {
             </button>
 
         `;
+      }
+   }
 
-    }
+   /**
+    * ==========================================
+    * Select Purchase Item
+    * ==========================================
+    */
+   function selectPurchaseItem(itemName) {
+      document.getElementById("itemSearch").value = itemName;
 
-}
+      clearPurchaseSuggestions();
 
+      updatePurchaseSummary();
+   }
 
-/**
- * ==========================================
- * Select Purchase Item
- * ==========================================
- */
-function selectPurchaseItem(itemName) {
+   /**
+    * ==========================================
+    * Add New Purchase Item
+    * ==========================================
+    */
+   function addNewPurchaseItem() {
+      const itemName = document.getElementById("itemSearch").value.trim();
 
-    document.getElementById("itemSearch").value = itemName;
+      if (!itemName) return;
 
-    clearPurchaseSuggestions();
+      google.script.run
 
-    updatePurchaseSummary();
-
-}
-
-
-
-/**
- * ==========================================
- * Add New Purchase Item
- * ==========================================
- */
-function addNewPurchaseItem() {
-
-    const itemName =
-        document.getElementById("itemSearch").value.trim();
-
-    if (!itemName) return;
-
-    google.script.run
-
-        .withSuccessHandler(function(response){
-
-            document.getElementById("itemSearch").value =
-                response.itemName;
+         .withSuccessHandler(function (response) {
+            document.getElementById("itemSearch").value = response.itemName;
 
             clearPurchaseSuggestions();
 
@@ -1239,399 +1038,331 @@ function addNewPurchaseItem() {
 
             // Auto-select newly added item
             selectPurchaseItem(response.itemName);
+         })
 
-        })
-
-        .withFailureHandler(function(error){
-
+         .withFailureHandler(function (error) {
             alert(error.message);
+         })
 
-        })
+         .addPurchaseItem(itemName);
+   }
 
-        .addPurchaseItem(itemName);
+   /**
+    * ==========================================
+    * Clear Suggestions
+    * ==========================================
+    */
+   function clearPurchaseSuggestions() {
+      const el = document.getElementById("itemSuggestions");
+      if (el) el.innerHTML = "";
+   }
 
-}
-
-
-
-
-
-
-
-
-/**
- * ==========================================
- * Clear Suggestions
- * ==========================================
- */
-function clearPurchaseSuggestions() {
-    const el=document.getElementById("itemSuggestions");
-    if(el) el.innerHTML="";
-}
-
-/**
- * ==========================================
- * Collect Purchase Data
- * ==========================================
- */
-function collectPurchaseData() {
-
-    return {
-
-        purchase: {
-
+   /**
+    * ==========================================
+    * Collect Purchase Data
+    * ==========================================
+    */
+   function collectPurchaseData() {
+      return {
+         purchase: {
             purchaseDate: document.getElementById("purchaseDate").value,
 
             itemName: document.getElementById("itemSearch").value.trim(),
 
-            quantity: Number(
-                document.getElementById("quantity").value
-            ),
+            quantity: Number(document.getElementById("quantity").value),
 
             unit: document.getElementById("unit").value,
 
             paymentType: document.getElementById("paymentType").value,
 
-            amount: Number(
-                document.getElementById("amount").value
-            ),
+            amount: Number(document.getElementById("amount").value),
 
             supplier: document.getElementById("supplier").value,
 
-            remarks: document.getElementById("remarks").value.trim()
+            remarks: document.getElementById("remarks").value.trim(),
+         },
+      };
+   }
 
-        }
+   /**
+    * ==========================================
+    * Save Purchase
+    * ==========================================
+    */
+   function savePurchase() {
+      const purchaseData = collectPurchaseData();
 
-    };
+      google.script.run
 
-}
-
-
-/**
- * ==========================================
- * Save Purchase
- * ==========================================
- */
-function savePurchase() {
-
-    const purchaseData = collectPurchaseData();
-
-    google.script.run
-
-        .withSuccessHandler(function (response) {
-
+         .withSuccessHandler(function (response) {
             if (!response.success) {
-
-                alert(response.message);
-                return;
-
+               alert(response.message);
+               return;
             }
 
             alert(
-                response.message +
-                "\n\nPurchase ID : " +
-                response.purchaseId
+               response.message + "\n\nPurchase ID : " + response.purchaseId,
             );
 
             clearPurchaseForm();
+         })
 
-        })
-
-        .withFailureHandler(function (error) {
-
+         .withFailureHandler(function (error) {
             alert(error.message);
+         })
 
-        })
+         .savePurchaseFromWeb(purchaseData);
+   }
 
-        .savePurchaseFromWeb(purchaseData);
+   /**
+    * ==========================================
+    * Update Purchase Summary
+    * ==========================================
+    */
+   function updatePurchaseSummary() {
+      if (!document.getElementById("summaryPurchaseDate")) return;
 
-}
+      document.getElementById("summaryPurchaseDate").textContent =
+         document.getElementById("purchaseDate").value || "-";
 
+      document.getElementById("summaryItem").textContent =
+         document.getElementById("itemSearch").value || "-";
 
-/**
- * ==========================================
- * Update Purchase Summary
- * ==========================================
- */
-function updatePurchaseSummary() {
+      document.getElementById("summaryQuantity").textContent =
+         document.getElementById("quantity").value || "-";
 
-    if(!document.getElementById("summaryPurchaseDate")) return;
+      document.getElementById("summaryUnit").textContent =
+         document.getElementById("unit").value || "-";
 
-    document.getElementById("summaryPurchaseDate").textContent =
-        document.getElementById("purchaseDate").value || "-";
+      document.getElementById("summaryPaymentType").textContent =
+         document.getElementById("paymentType").value || "-";
 
-    document.getElementById("summaryItem").textContent =
-        document.getElementById("itemSearch").value || "-";
+      const amount = document.getElementById("amount").value || 0;
 
-    document.getElementById("summaryQuantity").textContent =
-        document.getElementById("quantity").value || "-";
+      document.getElementById("summaryAmount").textContent = "₹" + amount;
 
-    document.getElementById("summaryUnit").textContent =
-        document.getElementById("unit").value || "-";
+      document.getElementById("summarySupplier").textContent =
+         document.getElementById("supplier").value || "-";
 
-    document.getElementById("summaryPaymentType").textContent =
-        document.getElementById("paymentType").value || "-";
+      document.getElementById("summaryRemarks").textContent =
+         document.getElementById("remarks").value || "-";
+   }
 
-    const amount = document.getElementById("amount").value || 0;
+   /**
+    * ==========================================
+    * Clear Purchase Form
+    * ==========================================
+    */
+   function clearPurchaseForm() {
+      // Today's date
+      document.getElementById("purchaseDate").value = new Date()
+         .toISOString()
+         .split("T")[0];
 
-    document.getElementById("summaryAmount").textContent =
-        "₹" + amount;
+      // Clear form fields
+      document.getElementById("itemSearch").value = "";
+      document.getElementById("quantity").value = "";
+      document.getElementById("unit").selectedIndex = 0;
+      document.getElementById("paymentType").selectedIndex = 0;
+      document.getElementById("amount").value = "";
+      document.getElementById("supplier").selectedIndex = 0;
+      document.getElementById("remarks").value = "";
 
-    document.getElementById("summarySupplier").textContent =
-        document.getElementById("supplier").value || "-";
+      // Reset selected item
+      selectedPurchaseItem = null;
 
-    document.getElementById("summaryRemarks").textContent =
-        document.getElementById("remarks").value || "-";
+      // Clear suggestions
+      clearPurchaseSuggestions();
 
-}
+      // Refresh summary
+      updatePurchaseSummary();
 
+      // Cursor back to Search Item
+      document.getElementById("itemSearch").focus();
+   }
 
-/**
- * ==========================================
- * Clear Purchase Form
- * ==========================================
- */
-function clearPurchaseForm() {
+   /**
+    * ==========================================
+    * Clear POS Form
+    * ==========================================
+    */
+   function clearPOSForm() {
+      console.log("Clearing POS Form...");
 
-    // Today's date
-    document.getElementById("purchaseDate").value =
-        new Date().toISOString().split("T")[0];
+      function setValue(id, value) {
+         const el = document.getElementById(id);
+         if (el) el.value = value;
+      }
 
-    // Clear form fields
-    document.getElementById("itemSearch").value = "";
-    document.getElementById("quantity").value = "";
-    document.getElementById("unit").selectedIndex = 0;
-    document.getElementById("paymentType").selectedIndex = 0;
-    document.getElementById("amount").value = "";
-    document.getElementById("supplier").selectedIndex = 0;
-    document.getElementById("remarks").value = "";
+      function resetSelect(id) {
+         const el = document.getElementById(id);
+         if (el) el.selectedIndex = 0;
+      }
 
-    // Reset selected item
-    selectedPurchaseItem = null;
+      // Customer
+      setValue("customerName", "");
+      setValue("mobile", "");
+      setValue("houseAddress", "");
 
-    // Clear suggestions
-    clearPurchaseSuggestions();
+      // Today's date
+      setValue("orderDate", new Date().toISOString().split("T")[0]);
 
-    // Refresh summary
-    updatePurchaseSummary();
+      // Dropdowns
+      resetSelect("deliveryArea");
+      resetSelect("deliverySlot");
+      resetSelect("orderType");
+      resetSelect("paymentMode");
+      resetSelect("paymentStatus");
 
-    // Cursor back to Search Item
-    document.getElementById("itemSearch").focus();
+      // Search
+      setValue("menuSearch", "");
 
-}
+      const suggestionBox = document.getElementById("menuSuggestions");
 
+      if (suggestionBox) {
+         suggestionBox.innerHTML = "";
+         suggestionBox.style.display = "none";
+      }
 
+      // Special Instructions
+      setValue("specialInstructions", "");
 
-/**
- * ==========================================
- * Clear POS Form
- * ==========================================
- */
-function clearPOSForm() {
+      // Discount
+      setValue("discount", 0);
 
-    console.log("Clearing POS Form...");
+      // Reset cart
+      if (typeof cart !== "undefined") {
+         cart = [];
+      }
 
-    function setValue(id, value) {
-        const el = document.getElementById(id);
-        if (el) el.value = value;
-    }
+      if (typeof deliveryCharge !== "undefined") {
+         deliveryCharge = 0;
+      }
 
-    function resetSelect(id) {
-        const el = document.getElementById(id);
-        if (el) el.selectedIndex = 0;
-    }
+      if (typeof renderCart === "function") {
+         renderCart();
+      }
 
-    // Customer
-    setValue("customerName", "");
-    setValue("mobile", "");
-    setValue("houseAddress", "");
+      if (typeof updateOrderSummary === "function") {
+         updateOrderSummary();
+      }
 
-    // Today's date
-    setValue("orderDate", new Date().toISOString().split("T")[0]);
+      // Focus
+      const customer = document.getElementById("customerName");
+      if (customer) customer.focus();
 
-    // Dropdowns
-    resetSelect("deliveryArea");
-    resetSelect("deliverySlot");
-    resetSelect("orderType");
-    resetSelect("paymentMode");
-    resetSelect("paymentStatus");
+      console.log("POS Cleared");
+   }
 
-    // Search
-    setValue("menuSearch", "");
+   /**
+    * ==========================================
+    * INVOICE MODULE
+    * ==========================================
+    */
 
-    const suggestionBox = document.getElementById("menuSuggestions");
+   /**
+    * ==========================================
+    * Initialize Invoice Module
+    * ==========================================
+    */
+   function initializeInvoice() {
+      console.log("Invoice Module Loaded");
+   }
 
-    if (suggestionBox) {
-        suggestionBox.innerHTML = "";
-        suggestionBox.style.display = "none";
-    }
+   /**
+    * ==========================================
+    * Search Invoice
+    * ==========================================
+    */
+   function searchInvoice() {
+      const orderId = document.getElementById("searchOrderId").value.trim();
 
-    // Special Instructions
-    setValue("specialInstructions", "");
+      if (!orderId) {
+         alert("Please enter Order ID.");
 
-    // Discount
-    setValue("discount", 0);
+         return;
+      }
 
-    // Reset cart
-    if (typeof cart !== "undefined") {
-        cart = [];
-    }
+      google.script.run
 
-    if (typeof deliveryCharge !== "undefined") {
-        deliveryCharge = 0;
-    }
-
-    if (typeof renderCart === "function") {
-        renderCart();
-    }
-
-    if (typeof updateOrderSummary === "function") {
-        updateOrderSummary();
-    }
-
-    // Focus
-    const customer = document.getElementById("customerName");
-    if (customer) customer.focus();
-
-    console.log("POS Cleared");
-
-}
-
-
-/**
- * ==========================================
- * INVOICE MODULE
- * ==========================================
- */
-
-/**
- * ==========================================
- * Initialize Invoice Module
- * ==========================================
- */
-function initializeInvoice() {
-
-    console.log("Invoice Module Loaded");
-
-}
-
-
-
-
-/**
- * ==========================================
- * Search Invoice
- * ==========================================
- */
-/**
- * ==========================================
- * Search Invoice
- * ==========================================
- */
-function searchInvoice() {
-
-    const orderId = document
-        .getElementById("searchOrderId")
-        .value
-        .trim();
-
-    if (!orderId) {
-
-        alert("Please enter Order ID.");
-
-        return;
-
-    }
-
-    google.script.run
-
-        .withSuccessHandler(function(response) {
-
+         .withSuccessHandler(function (response) {
             if (!response.success) {
+               alert(response.message);
 
-                alert(response.message);
-
-                return;
-
+               return;
             }
 
             renderInvoice(response);
+         })
 
-        })
-
-        .withFailureHandler(function(error) {
-
+         .withFailureHandler(function (error) {
             console.error(error);
 
             alert(error);
+         })
 
-        })
+         .getInvoice(orderId);
+   }
 
-        .getInvoice(orderId);
+   /**
+    * ==========================================
+    * renderInvoice
+    * ==========================================
+    */
 
-}
+   function renderInvoice(data) {
+      const order = data.order;
+      const items = data.items;
 
+      let subtotal = 0;
 
+      // ===========================
+      // Header
+      // ===========================
 
+      document.getElementById("invOrderId").innerText = order.orderId;
 
+      document.getElementById("invDate").innerText = order.orderDate;
 
+      document.getElementById("invCustomer").innerText = order.customerName;
 
+      document.getElementById("invMobile").innerText = order.mobile;
 
-function renderInvoice(data) {
+      document.getElementById("invDeliveryArea").innerText = order.deliveryArea;
 
-    const order = data.order;
-    const items = data.items;
+      document.getElementById("invDeliverySlot").innerText = order.deliverySlot;
 
-    let subtotal = 0;
+      document.getElementById("invOrderType").innerText = order.orderType;
 
-    // ===========================
-    // Header
-    // ===========================
+      document.getElementById("invAddress").innerHTML = (
+         order.houseAddress || ""
+      ).replace(/\n/g, "<br>");
 
-    document.getElementById("invOrderId").innerText = order.orderId;
+      document.getElementById("invPaymentMode2").innerText = order.paymentMode;
 
-    document.getElementById("invDate").innerText = order.orderDate;
+      document.getElementById("invInstructions").innerText =
+         order.specialInstructions || "-";
 
-    document.getElementById("invCustomer").innerText = order.customerName;
+      // ===========================
+      // Status Badge
+      // ===========================
 
-    document.getElementById("invMobile").innerText = order.mobile;
+      document.getElementById("invStatus").innerHTML =
+         `<span class="badge bg-primary">${order.status}</span>`;
 
-    document.getElementById("invDeliveryArea").innerText = order.deliveryArea;
+      document.getElementById("invPaymentStatus").innerHTML =
+         `<span class="badge bg-success">${order.paymentStatus}</span>`;
 
-    document.getElementById("invDeliverySlot").innerText = order.deliverySlot;
+      // ===========================
+      // Items
+      // ===========================
 
-    document.getElementById("invOrderType").innerText = order.orderType;
+      let rows = "";
 
-    document.getElementById("invAddress").innerHTML =
-        (order.houseAddress || "").replace(/\n/g,"<br>");
+      items.forEach(function (item) {
+         subtotal += item.total;
 
-    document.getElementById("invPaymentMode2").innerText =
-        order.paymentMode;
-
-    document.getElementById("invInstructions").innerText =
-        order.specialInstructions || "-";
-
-    // ===========================
-    // Status Badge
-    // ===========================
-
-    document.getElementById("invStatus").innerHTML =
-        `<span class="badge bg-primary">${order.status}</span>`;
-
-    document.getElementById("invPaymentStatus").innerHTML =
-        `<span class="badge bg-success">${order.paymentStatus}</span>`;
-
-    // ===========================
-    // Items
-    // ===========================
-
-    let rows = "";
-
-    items.forEach(function(item){
-
-        subtotal += item.total;
-
-        rows += `
+         rows += `
         <tr>
 
             <td>${item.itemName}</td>
@@ -1644,53 +1375,44 @@ function renderInvoice(data) {
 
         </tr>
         `;
+      });
 
-    });
+      document.getElementById("invoiceItemsBody").innerHTML = rows;
 
-    document.getElementById("invoiceItemsBody").innerHTML = rows;
+      // ===========================
+      // Totals
+      // ===========================
 
-    // ===========================
-    // Totals
-    // ===========================
+      document.getElementById("invSubtotal").innerText =
+         "₹" + subtotal.toFixed(2);
 
-    document.getElementById("invSubtotal").innerText =
-        "₹" + subtotal.toFixed(2);
+      document.getElementById("invDeliveryCharge").innerText =
+         "₹" + Number(order.deliveryCharge || 0).toFixed(2);
 
-    document.getElementById("invDeliveryCharge").innerText =
-        "₹" + Number(order.deliveryCharge || 0).toFixed(2);
+      document.getElementById("invDiscount").innerText =
+         "₹" + Number(order.discount || 0).toFixed(2);
 
-    document.getElementById("invDiscount").innerText =
-        "₹" + Number(order.discount || 0).toFixed(2);
+      document.getElementById("invGrandTotal").innerText =
+         "₹" + Number(order.grandTotal).toFixed(2);
+   }
 
-    document.getElementById("invGrandTotal").innerText =
-        "₹" + Number(order.grandTotal).toFixed(2);
+   /**
+    * ==========================================
+    * Print Invoice
+    * ==========================================
+    */
+   function printInvoice() {
+      const invoice = document.getElementById("invoicePdfContainer");
 
-}
+      if (!invoice) {
+         alert("Invoice not found.");
 
+         return;
+      }
 
+      const printWindow = window.open("", "_blank");
 
-
-/**
- * ==========================================
- * Print Invoice
- * ==========================================
- */
-function printInvoice() {
-
-   const invoice =
-    document.getElementById("invoicePdfContainer");
-
-    if (!invoice) {
-
-        alert("Invoice not found.");
-
-        return;
-
-    }
-
-    const printWindow = window.open("", "_blank");
-
-    printWindow.document.write(`
+      printWindow.document.write(`
         <html>
 
         <head>
@@ -1724,122 +1446,96 @@ function printInvoice() {
         </html>
     `);
 
-    printWindow.document.close();
+      printWindow.document.close();
 
-    printWindow.focus();
+      printWindow.focus();
 
-    printWindow.print();
+      printWindow.print();
 
-    printWindow.close();
+      printWindow.close();
+   }
 
-}
+   /**
+    * ==========================================
+    * Download Invoice PDF
+    * ==========================================
+    */
+   function downloadInvoicePdf() {
+      const invoice = document.getElementById("invoicePdfContainer");
 
+      if (!invoice) {
+         alert("Invoice not found.");
 
+         return;
+      }
 
+      const orderId = document.getElementById("invOrderId").innerText.trim();
 
+      if (!orderId || orderId === "-") {
+         alert("Please search an invoice first.");
 
-/**
- * ==========================================
- * Download Invoice PDF
- * ==========================================
- */
-/**
- * ==========================================
- * Download Invoice PDF
- * ==========================================
- */
-function downloadInvoicePdf() {
+         return;
+      }
 
-    const invoice = document.getElementById("invoicePdfContainer");
+      const btn = document.getElementById("btnDownloadPdf");
 
-    if (!invoice) {
+      btn.disabled = true;
 
-        alert("Invoice not found.");
+      btn.innerHTML = "Generating PDF...";
 
-        return;
+      const today = new Date();
 
-    }
+      const fileDate =
+         today.getFullYear() +
+         "-" +
+         String(today.getMonth() + 1).padStart(2, "0") +
+         "-" +
+         String(today.getDate()).padStart(2, "0");
 
-    const orderId =
-        document.getElementById("invOrderId").innerText.trim();
+      const fileName = orderId + "_" + fileDate + ".pdf";
 
-    if (!orderId || orderId === "-") {
+      const options = {
+         margin: 10,
 
-        alert("Please search an invoice first.");
+         filename: fileName,
 
-        return;
-
-    }
-
-    const btn = document.getElementById("btnDownloadPdf");
-
-    btn.disabled = true;
-
-    btn.innerHTML = "Generating PDF...";
-
-    const today = new Date();
-
-    const fileDate =
-        today.getFullYear() + "-" +
-        String(today.getMonth() + 1).padStart(2, "0") + "-" +
-        String(today.getDate()).padStart(2, "0");
-
-    const fileName =
-        orderId + "_" + fileDate + ".pdf";
-
-    const options = {
-
-        margin: 10,
-
-        filename: fileName,
-
-        image: {
-
+         image: {
             type: "jpeg",
 
-            quality: 1
+            quality: 1,
+         },
 
-        },
-
-        html2canvas: {
-
+         html2canvas: {
             scale: 2,
 
-            useCORS: true
+            useCORS: true,
+         },
 
-        },
-
-        jsPDF: {
-
+         jsPDF: {
             unit: "mm",
 
             format: "a4",
 
-            orientation: "portrait"
+            orientation: "portrait",
+         },
+      };
 
-        }
+      html2pdf()
+         .set(options)
 
-    };
+         .from(invoice)
 
-    html2pdf()
+         .outputPdf("blob")
 
-        .set(options)
-
-        .from(invoice)
-
-        .outputPdf("blob")
-
-        .then(async function (pdfBlob) {
-
+         .then(async function (pdfBlob) {
             // Download PDF
 
             await html2pdf()
+               .set(options)
 
-                .set(options)
+               .from(invoice)
 
-                .from(invoice)
-
-                .save();
+               .save();
 
             // Save to Google Drive
 
@@ -1847,34 +1543,26 @@ function downloadInvoicePdf() {
 
             google.script.run
 
-                .withSuccessHandler(function (response) {
+               .withSuccessHandler(function (response) {
+                  console.log("PDF saved to Drive");
 
-                    console.log("PDF saved to Drive");
+                  console.log(response);
+               })
 
-                    console.log(response);
+               .withFailureHandler(function (error) {
+                  console.error(error);
+               })
 
-                })
+               .savePdf(fileName, base64Pdf);
+         })
 
-                .withFailureHandler(function (error) {
-
-                    console.error(error);
-
-                })
-
-                .savePdf(fileName, base64Pdf);
-
-        })
-
-        .then(function () {
-
+         .then(function () {
             btn.disabled = false;
 
             btn.innerHTML = "📄 Download PDF";
+         })
 
-        })
-
-        .catch(function (err) {
-
+         .catch(function (err) {
             console.error(err);
 
             btn.disabled = false;
@@ -1882,145 +1570,125 @@ function downloadInvoicePdf() {
             btn.innerHTML = "📄 Download PDF";
 
             alert("Unable to generate PDF.");
+         });
+   }
 
-        });
+   /**
+    * ==========================================
+    * Convert Blob to Base64
+    * ==========================================
+    */
+   function blobToBase64(blob) {
+      return new Promise(function (resolve, reject) {
+         const reader = new FileReader();
 
-}
-
-/**
- * ==========================================
- * Convert Blob to Base64
- * ==========================================
- */
-function blobToBase64(blob) {
-
-    return new Promise(function(resolve, reject) {
-
-        const reader = new FileReader();
-
-        reader.onloadend = function () {
+         reader.onloadend = function () {
             resolve(reader.result);
-        };
+         };
 
-        reader.onerror = reject;
+         reader.onerror = reject;
 
-        reader.readAsDataURL(blob);
+         reader.readAsDataURL(blob);
+      });
+   }
 
-    });
+   /**
+    * ==========================================
+    * Share Invoice on WhatsApp
+    * ==========================================
+    */
+   async function shareInvoiceWhatsApp() {
+      const invoice = document.getElementById("invoicePdfContainer");
 
-}
+      if (!invoice) {
+         alert("Invoice not found.");
 
-/**
- * ==========================================
- * Share Invoice on WhatsApp
- * ==========================================
- */
-async function shareInvoiceWhatsApp() {
+         return;
+      }
 
-    const invoice = document.getElementById("invoicePdfContainer");
+      const orderId = document.getElementById("invOrderId").innerText.trim();
 
-    if (!invoice) {
+      if (!orderId || orderId === "-") {
+         alert("Please search an invoice first.");
 
-        alert("Invoice not found.");
+         return;
+      }
 
-        return;
+      const customerName = document
+         .getElementById("invCustomer")
+         .innerText.trim();
 
-    }
+      let mobile = document.getElementById("invMobile").innerText.trim();
 
-    const orderId =
-        document.getElementById("invOrderId").innerText.trim();
+      mobile = mobile.replace(/\D/g, "");
 
-    if (!orderId || orderId === "-") {
+      if (mobile.length === 10) {
+         mobile = "91" + mobile;
+      }
 
-        alert("Please search an invoice first.");
+      const grandTotal = document
+         .getElementById("invGrandTotal")
+         .innerText.trim();
 
-        return;
+      const today = new Date();
 
-    }
+      const fileDate =
+         today.getFullYear() +
+         "-" +
+         String(today.getMonth() + 1).padStart(2, "0") +
+         "-" +
+         String(today.getDate()).padStart(2, "0");
 
-    const customerName =
-        document.getElementById("invCustomer").innerText.trim();
+      const fileName = orderId + "_" + fileDate + ".pdf";
 
-    let mobile =
-        document.getElementById("invMobile").innerText.trim();
+      const options = {
+         margin: 10,
 
-    mobile = mobile.replace(/\D/g, "");
+         filename: fileName,
 
-    if (mobile.length === 10) {
-
-        mobile = "91" + mobile;
-
-    }
-
-    const grandTotal =
-        document.getElementById("invGrandTotal").innerText.trim();
-
-    const today = new Date();
-
-    const fileDate =
-        today.getFullYear() + "-" +
-        String(today.getMonth() + 1).padStart(2, "0") + "-" +
-        String(today.getDate()).padStart(2, "0");
-
-    const fileName =
-        orderId + "_" + fileDate + ".pdf";
-
-    const options = {
-
-        margin: 10,
-
-        filename: fileName,
-
-        image: {
+         image: {
             type: "jpeg",
-            quality: 1
-        },
+            quality: 1,
+         },
 
-        html2canvas: {
+         html2canvas: {
             scale: 2,
-            useCORS: true
-        },
+            useCORS: true,
+         },
 
-        jsPDF: {
+         jsPDF: {
             unit: "mm",
             format: "a4",
-            orientation: "portrait"
-        }
+            orientation: "portrait",
+         },
+      };
 
-    };
+      try {
+         // Generate PDF Blob
 
-    try {
-
-        // Generate PDF Blob
-
-        const pdfBlob = await html2pdf()
-
+         const pdfBlob = await html2pdf()
             .set(options)
 
             .from(invoice)
 
             .outputPdf("blob");
 
-        // Convert Blob to Base64
+         // Convert Blob to Base64
 
-        const base64Pdf = await blobToBase64(pdfBlob);
+         const base64Pdf = await blobToBase64(pdfBlob);
 
-        // Save PDF to Google Drive
+         // Save PDF to Google Drive
 
-        google.script.run
+         google.script.run
 
-            .withSuccessHandler(function(response) {
+            .withSuccessHandler(function (response) {
+               if (!response.success) {
+                  alert(response.message);
 
-                if (!response.success) {
+                  return;
+               }
 
-                    alert(response.message);
-
-                    return;
-
-                }
-
-                const message =
-`Hello ${customerName},
+               const message = `Hello ${customerName},
 
 Thank you for choosing Smoky Swaad.
 
@@ -2034,211 +1702,187 @@ Thank you for choosing Smoky Swaad.
 
 🍛 Smoky Swaad`;
 
-                window.open(
+               window.open(
+                  "https://wa.me/" +
+                     mobile +
+                     "?text=" +
+                     encodeURIComponent(message),
 
-                    "https://wa.me/" +
-                    mobile +
-                    "?text=" +
-                    encodeURIComponent(message),
-
-                    "_blank"
-
-                );
-
+                  "_blank",
+               );
             })
 
-            .withFailureHandler(function(error) {
+            .withFailureHandler(function (error) {
+               console.error(error);
 
-                console.error(error);
-
-                alert("Unable to save invoice to Google Drive.");
-
+               alert("Unable to save invoice to Google Drive.");
             })
 
             .saveInvoicePdf(fileName, base64Pdf);
+      } catch (err) {
+         console.error(err);
 
-    }
+         alert("Unable to generate Invoice PDF.");
+      }
+   }
 
-    catch (err) {
+   /**
+    * ==========================================
+    * initializeReports
+    * ==========================================
+    */
 
-        console.error(err);
+   function initializeReports() {
+      console.log("Reports Module Loaded");
 
-        alert("Unable to generate Invoice PDF.");
+      const today = new Date().toISOString().split("T")[0];
 
-    }
+      const fromDate = document.getElementById("reportFromDate");
 
-}
+      const toDate = document.getElementById("reportToDate");
 
+      // Set default values
+      fromDate.value = today;
 
+      toDate.value = today;
 
-function initializeReports() {
+      // Restrict future dates
+      fromDate.max = today;
 
-    console.log("Reports Module Loaded");
+      toDate.max = today;
 
-    const today = new Date().toISOString().split("T")[0];
+      // Prevent To Date from being earlier than From Date
+      toDate.min = fromDate.value;
 
-    const fromDate = document.getElementById("reportFromDate");
+      // From Date Change
+      fromDate.addEventListener("change", function () {
+         toDate.min = this.value;
 
-    const toDate = document.getElementById("reportToDate");
-
-    // Set default values
-    fromDate.value = today;
-
-    toDate.value = today;
-
-    // Restrict future dates
-    fromDate.max = today;
-
-    toDate.max = today;
-
-    // Prevent To Date from being earlier than From Date
-    toDate.min = fromDate.value;
-
-    // From Date Change
-    fromDate.addEventListener("change", function () {
-
-        toDate.min = this.value;
-
-        if (toDate.value < this.value) {
-
+         if (toDate.value < this.value) {
             toDate.value = this.value;
+         }
 
-        }
+      // Disable PDF until a new report is generated
+         document.getElementById("btnDownloadPDF").disabled = true;
+         
+      });
 
-    });
+      // To Date Change
+      toDate.addEventListener("change", function () {
+         fromDate.max = this.value > today ? today : this.value;
 
-    // To Date Change
-    toDate.addEventListener("change", function () {
-
-        fromDate.max = this.value > today
-            ? today
-            : this.value;
-
-        if (fromDate.value > this.value) {
-
+         if (fromDate.value > this.value) {
             fromDate.value = this.value;
+         }
 
-        }
+      // Disable PDF until a new report is generated
+         document.getElementById("btnDownloadPDF").disabled = true;
+  
+      });
 
-    });
+      google.script.run
 
-google.script.run
+         .withSuccessHandler(renderReportDashboard)
 
-    .withSuccessHandler(renderReportDashboard)
+         .withFailureHandler(function (error) {
+            console.error(error);
+         })
 
-    .withFailureHandler(function(error){
+         .getReportsData(today, today);
+   }
 
-        console.error(error);
+   function renderReportDashboard(data) {
+      document.getElementById("todaySales").innerText =
+         "₹" + Number(data.todaySales).toFixed(2);
 
-    })
+      document.getElementById("todayOrders").innerText = data.todayOrders;
 
-    .getReportsData(today, today);
+      document.getElementById("todayProfit").innerText =
+         "₹" + Number(data.todayProfit).toFixed(2);
+   }
 
-}
+   /**
+    * ==========================================
+    * Generate Report
+    * ==========================================
+    */
+   function generateReport() {
+      const fromDate = document.getElementById("reportFromDate").value;
 
-function renderReportDashboard(data){
+      const toDate = document.getElementById("reportToDate").value;
 
-    document.getElementById("todaySales").innerText =
-        "₹" + Number(data.todaySales).toFixed(2);
+      if (!fromDate || !toDate) {
+         alert("Please select both dates.");
 
-    document.getElementById("todayOrders").innerText =
-        data.todayOrders;
+         return;
+      }
 
-    document.getElementById("todayProfit").innerText =
-        "₹" + Number(data.todayProfit).toFixed(2);
+      if (fromDate > toDate) {
+         alert("From Date cannot be greater than To Date.");
 
-}
+         return;
+      }
 
+      google.script.run
 
-
-
-
-
-/**
- * ==========================================
- * Generate Report
- * ==========================================
- */
-function generateReport() {
-
-    const fromDate =
-        document.getElementById("reportFromDate").value;
-
-    const toDate =
-        document.getElementById("reportToDate").value;
-
-    if (!fromDate || !toDate) {
-
-        alert("Please select both dates.");
-
-        return;
-
-    }
-
-    if (fromDate > toDate) {
-
-        alert("From Date cannot be greater than To Date.");
-
-        return;
-
-    }
-
-    google.script.run
-
-        .withSuccessHandler(function(data) {
+         .withSuccessHandler(function (data) {
+            console.log("Reports Response:", data);
 
             if (!data.success) {
+               alert(data.message);
 
-                alert(data.message);
-
-                return;
-
+               return;
             }
 
             renderSummary(data);
 
-        })
+            renderProfitSummary(data);
 
-.withFailureHandler(function(error){
+            console.log("Top Selling Items:", data.topSellingItems);
 
-    console.error("SERVER ERROR:", error);
+            renderTopSellingItems(data.topSellingItems);
 
-    alert(error.message || JSON.stringify(error));
+            renderOrderTable(data.orders);
 
-})
+            document.getElementById("btnDownloadPDF").disabled = false;
+         })
 
-        .getReportsData(fromDate, toDate);
+         .withFailureHandler(function (error) {
+            console.error("SERVER ERROR:", error);
 
-}
+            alert(error.message || JSON.stringify(error));
+         })
 
+         .getReportsData(fromDate, toDate);
+   }
 
+   /**
+    * ==========================================
+    * Render renderSummary
+    * ==========================================
+    */
 
+   function renderSummary(data) {
+      document.getElementById("reportTotalOrders").innerText = data.totalOrders;
 
-function renderSummary(data) {
+      document.getElementById("reportTotalSales").innerText =
+         "₹" + Number(data.totalSales).toFixed(2);
 
-    document.getElementById("reportTotalOrders").innerText =
-        data.totalOrders;
+      renderOrderTable(data.orders);
+   }
 
-    document.getElementById("reportTotalSales").innerText =
-        "₹" + Number(data.totalSales).toFixed(2);
+   /**
+    * ==========================================
+    * Render renderOrderTable
+    * ==========================================
+    */
+   function renderOrderTable(orders) {
+      const tbody = document.getElementById("reportOrdersBody");
 
-    renderOrderTable(data.orders);
+      tbody.innerHTML = "";
 
-}
-
-
-
-
-
-function renderOrderTable(orders) {
-
-    const tbody = document.getElementById("reportOrdersBody");
-
-    tbody.innerHTML = "";
-
-    if (!orders || orders.length === 0) {
-
-        tbody.innerHTML = `
+      if (!orders || orders.length === 0) {
+         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center text-muted">
                     No records found.
@@ -2246,15 +1890,13 @@ function renderOrderTable(orders) {
             </tr>
         `;
 
-        return;
+         return;
+      }
 
-    }
+      let html = "";
 
-let html = "";
-
-orders.forEach(function(order){
-
-    html += `
+      orders.forEach(function (order) {
+         html += `
         <tr>
             <td>${order.orderId}</td>
             <td>${order.orderDate}</td>
@@ -2267,32 +1909,149 @@ orders.forEach(function(order){
             </td>
         </tr>
     `;
+      });
 
-});
+      tbody.innerHTML = html;
+   }
 
-tbody.innerHTML = html;
+   /**
+    * ==========================================
+    * Render Profit Summary
+    * ==========================================
+    */
+   function renderProfitSummary(data) {
+      document.getElementById("reportRevenue").innerText =
+         "₹" + Number(data.totalSales).toFixed(2);
+
+      document.getElementById("reportFoodCost").innerText =
+         "₹" + Number(data.totalCost).toFixed(2);
+
+      document.getElementById("reportGrossProfit").innerText =
+         "₹" + Number(data.grossProfit).toFixed(2);
+
+      document.getElementById("reportProfitPercentage").innerText =
+         data.profitPercentage + "%";
+   }
+
+   /**
+    * ==========================================
+    * Render Top Selling Items
+    * ==========================================
+    */
+   function renderTopSellingItems(items) {
+      const tbody = document.getElementById("topSellingItemsBody");
+
+      tbody.innerHTML = "";
+
+      if (!items || items.length === 0) {
+         tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    No records found.
+                </td>
+            </tr>
+        `;
+
+         return;
+      }
+
+      items.forEach(function (item, index) {
+         tbody.innerHTML += `
+
+            <tr>
+
+                <td>${index + 1}</td>
+
+                <td>${item.menuItem}</td>
+
+                <td class="text-end">${item.quantity}</td>
+
+                <td class="text-end">₹${Number(item.revenue).toFixed(2)}</td>
+
+                <td class="text-end">₹${Number(item.cost).toFixed(2)}</td>
+
+                <td class="text-end">₹${Number(item.profit).toFixed(2)}</td>
+
+            </tr>
+
+        `;
+      });
+   }
+
+   /**
+    * ==========================================
+    * Download Report PDF
+    * ==========================================
+    */
+   function downloadReportPDF() {
+      const element = document.getElementById("reportContent");
+
+      if (!element) {
+         alert("Report content not found.");
+
+         return;
+      }
+
+      const fromDate = document.getElementById("reportFromDate").value;
+
+      const toDate = document.getElementById("reportToDate").value;
+
+      if (!fromDate || !toDate) {
+
+    alert("Please select both From Date and To Date.");
+
+    return;
 
 }
 
+      const filename =
+         "Smoky_Swaad_Report_" + fromDate + "_to_" + toDate + ".pdf";
 
+      const options = {
+         margin: 0.5,
 
+         filename: filename,
 
+         image: {
+            type: "jpeg",
 
+            quality: 1,
+         },
 
+         html2canvas: {
+            scale: 2,
 
+            useCORS: true,
 
+            logging: false,
+         },
 
+         jsPDF: {
+            unit: "in",
 
+            format: "a4",
 
+            orientation: "portrait",
+         },
+      };
 
+      setTimeout(function () {
+         html2pdf().set(options).from(element).save();
+      }, 500);
+   }
 
+   /**
+    * ==========================================
+    * Toggle Download PDF Button
+    * ==========================================
+    */
+   function toggleDownloadPDFButton() {
+      const fromDate = document.getElementById("reportFromDate").value;
 
+      const toDate = document.getElementById("reportToDate").value;
 
+      const button = document.getElementById("btnDownloadPDF");
 
-
-
-
-
-
-
+      button.disabled = !(fromDate && toDate);
+   }
 </script>
